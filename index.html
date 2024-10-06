@@ -34,22 +34,40 @@
       display: none;
     }
 
-    .custom-file-upload {
-      background-color: #007bff;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      display: inline-block;
-      margin-bottom: 15px;
-      transition: background-color 0.3s ease;
+    .button-container {
+      display: flex;
+      justify-content: center;
+      align-items: center; 
+      margin: 10px 0; 
     }
 
-    .custom-file-upload:hover {
+    .action-button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.3s ease;
+      border-radius: 5px 0 0 5px;
+    }
+
+    .action-button:last-child {
+      border-radius: 0 5px 5px 0; 
+    }
+
+    .or-text {
+      margin: 0; 
+      padding: 10px; 
+      color: white; 
+      font-weight: bold;
+      background-color: #007bff; 
+    }
+
+    .action-button:hover {
       background-color: #0056b3;
     }
 
-    button {
+    button[type="submit"] {
       background-color: #28a745;
       color: white;
       border: none;
@@ -58,9 +76,10 @@
       cursor: pointer;
       font-size: 1em;
       transition: background-color 0.3s ease;
+      margin-top: 15px; 
     }
 
-    button:hover {
+    button[type="submit"]:hover {
       background-color: #218838;
     }
 
@@ -83,38 +102,56 @@
       color: green;
       font-weight: bold;
       margin-top: 10px;
-      display: none;
+      display: none; 
     }
   </style>
 </head>
 <body>
   <div class="form-container">
     <h2>Upload Image</h2>
+
+    <div class="button-container">
+      <div class="action-button" id="chooseOption">Choose</div>
+      <div class="or-text">or</div> 
+      <div class="action-button" id="takePhotoOption">Take Photo</div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" />
+
     <form id="imageForm">
-      <label class="custom-file-upload">
-        <input type="file" id="fileInput" accept="image/*" />
-        <span id="fileLabelText">Choose or Take a Photo</span>
-      </label>
-      <br />
       <button type="submit">Upload</button>
     </form>
+
     <div id="response"></div>
     <p class="selected-indicator" id="selectedIndicator">Image selected!</p>
   </div>
 
   <script>
-    document.getElementById('fileInput').addEventListener('change', function (e) {
-      const fileName = e.target.files[0]?.name;
+    const fileInput = document.getElementById('fileInput');
+    const selectedIndicator = document.getElementById('selectedIndicator');
+    const response = document.getElementById('response');
+
+    document.getElementById('chooseOption').addEventListener('click', function() {
+      fileInput.removeAttribute('capture'); 
+      fileInput.click(); 
+    });
+
+    document.getElementById('takePhotoOption').addEventListener('click', function() {
+      fileInput.setAttribute('capture', 'user');
+      fileInput.click(); 
+    });
+
+    fileInput.addEventListener('change', function () {
+      const fileName = fileInput.files[0]?.name;
       if (fileName) {
-        document.getElementById('fileLabelText').innerText = `Selected: ${fileName}`;
-        document.getElementById('selectedIndicator').style.display = 'block';
+        selectedIndicator.innerText = `Selected: ${fileName}`;
+        selectedIndicator.style.display = 'block'; 
       }
     });
 
     document.getElementById('imageForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+      e.preventDefault(); 
 
-      const fileInput = document.getElementById('fileInput');
       const file = fileInput.files[0];
 
       if (!file) {
@@ -122,7 +159,7 @@
         return;
       }
 
-      document.getElementById('response').innerText = 'Uploading...';
+      response.innerText = 'Uploading...';
 
       const formData = new FormData();
       formData.append('image', file);
@@ -131,21 +168,21 @@
       const url = `https://api.imgbb.com/1/upload?key=${apiKey}`;
 
       try {
-        const response = await fetch(url, {
+        const uploadResponse = await fetch(url, {
           method: 'POST',
           body: formData,
         });
 
-        const result = await response.json();
+        const result = await uploadResponse.json();
 
         if (result.success) {
-          document.getElementById('response').innerHTML = `<p>Image uploaded successfully!</p><p>Here is url: ${result?.data?.url}</p><img src="${result.data.url}" alt="Uploaded Image" />`;
-          document.getElementById('selectedIndicator').style.display = 'none';
+          response.innerHTML = `<p>Image uploaded successfully!</p><p><span style="font-weight: bold; color: #007bff;">Photo URL:</span> ${result?.data?.url}</p><img src="${result.data.url}" alt="Uploaded Image" />`;
+          selectedIndicator.style.display = 'none';
         } else {
-          document.getElementById('response').innerText = 'Failed to upload image';
+          response.innerText = 'Failed to upload image';
         }
       } catch (error) {
-        document.getElementById('response').innerText = 'An error occurred while uploading the image';
+        response.innerText = 'An error occurred while uploading the image';
         console.error(error);
       }
     });
